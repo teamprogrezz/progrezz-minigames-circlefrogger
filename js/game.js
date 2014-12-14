@@ -76,7 +76,6 @@ function init_view() {
   context.stroke();
 
   // Dibujar fragmentos
-  console.log(data_model.fragments)
   for (i = 0; i < data_model.fragments.length; ++i) {
     var text = "" + data_model.fragments[i].fragment;
     var x = data_model.fragments[i].x*WIDTH + WIDTH/2.0;
@@ -137,7 +136,9 @@ function on_event(evento) {
 
   switch(data_model.player.last_movement) {
     case KEY_NONE:
-      data_model.player.last_movement = e.keyCode;
+      switch (e.keyCode) {
+        case KEY_LEFT: case KEY_RIGHT: case KEY_UP: case KEY_DOWN: data_model.player.last_movement = e.keyCode; break;
+      }
     break;
     case KEY_UP: case KEY_DOWN:
       switch (e.keyCode) {
