@@ -4,7 +4,7 @@ var COLS = 20
 var WIDTH = 30
 var HEIGHT = 30
 
-var FRAME_TIME = 250
+var FRAME_TIME = 150
 
 var KEY_NONE  = -1
 var KEY_UP    = 38
@@ -29,8 +29,12 @@ var data_model = {
   player: {
     x: 0,
     y: 0,
-    last_movement: KEY_NONE
-  }
+    last_movement: KEY_NONE,
+    alive: true,
+    last_fragment_picked: 0
+  },
+  victory: false,
+  map: null
 };
 
 function init_data_model(num_fragments) {
@@ -48,8 +52,14 @@ function init_data_model(num_fragments) {
         }
       }
     }
+  }
 
-
+  data_model.map = new Array(ROWS);
+  for (y = 0; y < ROWS; ++y) {
+    data_model.map[y] = new Array(COLS);
+    for (x = 0; x < COLS; ++x) {
+      data_model.map[y][x] = false;
+    }
   }
 }
 
@@ -76,6 +86,10 @@ function init_view() {
 }
 
 function on_frame() {
+
+  if (!data_model.player.alive || data_model.victory)
+    return;
+  
   switch(data_model.player.last_movement) {
     case KEY_UP:    data_model.player.y--; break;
     case KEY_DOWN:  data_model.player.y++; break;
@@ -88,6 +102,32 @@ function on_frame() {
 
   var canvas = document.getElementById('gameview');
   var context = canvas.getContext("2d");
+
+  if (data_model.player.last_movement != KEY_NONE) {
+    if (!data_model.map[data_model.player.y][data_model.player.x]) {
+      for(i = 0; i < data_model.fragments.length; ++i) { 
+        var f = data_model.fragments[i];
+        if(data_model.player.x == f.x && data_model.player.y == f.y) {
+          if(f.fragment == data_model.player.last_fragment_picked + 1) {
+            data_model.player.last_fragment_picked++
+            if(data_model.player.last_fragment_picked == data_model.fragments.length) {
+              context.fillStyle = "#00FF00";
+              data_model.victory = true;
+            }
+          }
+          else {
+            context.fillStyle = "#FF0000";
+            data_model.player.alive = false;
+          }
+        }
+      }
+      data_model.map[data_model.player.y][data_model.player.x] = true;
+    }
+    else {
+      context.fillStyle = "#FF0000";
+      data_model.player.alive = false;
+    }
+  }
 
   context.fillRect(data_model.player.x * WIDTH, data_model.player.y * HEIGHT, WIDTH, HEIGHT);
 }
