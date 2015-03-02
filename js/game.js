@@ -10,12 +10,15 @@ var KEY_RESET = 82
 var BORDER_SIZE = 1 // Grosor del borde
 var END_LINE_SIZE_RATIO = 0.2 // Ratio del grosor de la línea de derrota
 var FONT_SIZE_RATIO = 0.4 // Ratio del tamaño de fuente en relación al tamaño de casilla
-var TEXT_X_RATIO = 0.25, TEXT_Y_RATIO = 0.75 // Ratio de la posición del texto
+var TEXT_X_RATIO = 0.24, TEXT_Y_RATIO = 0.75 // Ratio de la posición del texto
 var TEXT_MAX_WIDTH_RATIO = 0.24 // Ratio del ancho máximo del texto
 
-var FRAME_TIME = 150 // Tiempo de refresco (ms) - Determina la velocidad
 var END_TIME = 100 // Retardo al finalizar el juego
 var ANIMATION_TIME = 80 // Retardo entre las iluminaciones en la animación de victoria
+
+var MIN_DISPLACEMENT = 10 // Número mínimo de píxeles a desplazarse para un movimiento valido
+
+var frame_time // Tiempo de refresco (ms) - Determina la velocidad
 
 var canvas, context // "canvas" 2D y "context" para el dibujado
 var box_size // Tamaño de las casillas del tablero
@@ -49,11 +52,14 @@ var data_model = {
   map: null
 };
 
-function init_link_snake(success_function, failure_function, path, num_fragments, rows, cols, id_canvas) {
+function init_link_snake(success_function, failure_function, path, num_fragments, rows, cols, speed, id_canvas) {
   
   /* Establecimiento de funciones de victoria y derrota */
   success_game = success_function;
   failure_game = failure_function;
+  
+  /* Establecimiento de la velocidad de la serpiente */
+  frame_time = speed;
   
   /* Almacenando ruta relativa del directorio de imágenes */
   img_path = path;
@@ -69,7 +75,7 @@ function init_link_snake(success_function, failure_function, path, num_fragments
 
   /* Renderizado */
   on_frame();
-  setInterval(on_frame, FRAME_TIME);
+  setInterval(on_frame, frame_time);
 }
 
 function init_data_model(num_fragments, rows, cols) {
@@ -133,7 +139,7 @@ function init_view(id_canvas) {
     context.drawImage(background, margin_x, margin_y, board_width, board_height);
     
     // Dibujar rejilla
-    context.strokeStyle = "#888888";
+    context.strokeStyle = "#999999";
     for(y = 0; y < data_model.rows; ++y) {
       for(x = 0; x < data_model.cols; ++x) {
         context.rect(margin_x + x * box_size, margin_y + y * box_size, box_size, box_size);
@@ -259,7 +265,7 @@ function clean_box(x, y) {
   
   var box_image_width = background.width / data_model.cols;
   var box_image_height = background.height / data_model.rows;
-  context.drawImage(background, x * box_image_width, y * box_image_height, box_image_width, box_image_height, BORDER_SIZE + margin_x + x * box_size, BORDER_SIZE + margin_y + y * box_size, box_size - BORDER_SIZE * 2.0, box_size  - BORDER_SIZE * 2.0)
+  context.drawImage(background, x * box_image_width, y * box_image_height, box_image_width, box_image_height, BORDER_SIZE / 2.0 + margin_x + x * box_size, BORDER_SIZE / 2.0 + margin_y + y * box_size, box_size - BORDER_SIZE, box_size  - BORDER_SIZE)
 }
 
 function draw_player_image(file) {
@@ -420,16 +426,32 @@ function on_event_touchmove(evento) {
   var end_y = parseInt(evento.changedTouches[0].clientY);
   
   if (Math.abs(start_x - end_x) > Math.abs(start_y - end_y)) {
-    if (start_x - end_x < 0)
-      data_model.player.last_select_movement = KEY_RIGHT;
+    if (Math.abs(start_x - end_x) > MIN_DISPLACEMENT) {
+      switch(data_model.player.last_movement) {
+        case KEY_UP: case KEY_DOWN: case KEY_NONE:
+          if (start_x - end_x < 0)
+            data_model.player.last_select_movement = KEY_RIGHT;
+          else
+            data_model.player.last_select_movement = KEY_LEFT;
+        break;
+      }
+    }
     else
-      data_model.player.last_select_movement = KEY_LEFT;
+      return;
   }
   else {
-    if (start_y - end_y < 0)
-      data_model.player.last_select_movement = KEY_DOWN;
+    if (Math.abs(start_y - end_y) > MIN_DISPLACEMENT) {
+      switch(data_model.player.last_movement) {
+        case KEY_LEFT: case KEY_RIGHT: case KEY_NONE:
+          if (start_y - end_y < 0)
+            data_model.player.last_select_movement = KEY_DOWN;
+          else
+            data_model.player.last_select_movement = KEY_UP;
+        break;
+      }
+    }
     else
-      data_model.player.last_select_movement = KEY_UP;
+      return;
   }
     
   start_x = end_x;
