@@ -9,6 +9,9 @@ var KEY_RESET = 82
 
 var BORDER_SIZE = 1 // Grosor del borde
 var END_LINE_SIZE_RATIO = 0.2 // Ratio del grosor de la línea de derrota
+var FONT_SIZE_RATIO = 0.4 // Ratio del tamaño de fuente en relación al tamaño de casilla
+var TEXT_X_RATIO = 0.25, TEXT_Y_RATIO = 0.75 // Ratio de la posición del texto
+var TEXT_MAX_WIDTH_RATIO = 0.24 // Ratio del ancho máximo del texto
 
 var FRAME_TIME = 150 // Tiempo de refresco (ms) - Determina la velocidad
 var END_TIME = 100 // Retardo al finalizar el juego
@@ -20,6 +23,12 @@ var margin_x, margin_y // Márgenes de dibujado
 var last_direction // Auxiliar para la dirección anterior del jugador
 
 var success_game, failure_game // Funciones de éxito y fracaso
+
+var background // Imagen de fondo
+
+var img_path // Ruta relativa del directorio con las imágenes del juego
+
+var start_x, start_y // Coordenadas de inicio de evento de toque
 
 // Datos del juego
 var data_model = {
@@ -40,18 +49,23 @@ var data_model = {
   map: null
 };
 
-function init_link_snake(success_function, failure_function, num_fragments, rows, cols, id_canvas) {
+function init_link_snake(success_function, failure_function, path, num_fragments, rows, cols, id_canvas) {
   
   /* Establecimiento de funciones de victoria y derrota */
   success_game = success_function;
   failure_game = failure_function;
+  
+  /* Almacenando ruta relativa del directorio de imágenes */
+  img_path = path;
   
   /* Inicialización de datos y vista */
   init_data_model(num_fragments, rows, cols);
   init_view(id_canvas);
 
   /* Eventos */
-  document.onkeydown = on_event;
+  document.onkeydown = on_event_keyboard;
+  document.ontouchstart = on_event_touchstart;
+  document.ontouchmove = on_event_touchmove;
 
   /* Renderizado */
   on_frame();
@@ -111,32 +125,45 @@ function init_view(id_canvas) {
   margin_x = (canvas.width - board_width) / 2.0;
   margin_y = (canvas.height - board_height) / 2.0;
   
-  context.fillStyle = "#FFFFFF";
-  context.fillRect(margin_x, margin_y, board_width, board_height);
-  
-  // Dibujar fragmentos
-  context.fillStyle = "#000000";
-  for (i = 0; i < data_model.fragments.length; ++i) {
-    var text = "" + data_model.fragments[i].fragment;
-    var x = margin_x + data_model.fragments[i].x * box_size + box_size / 2.0;
-    var y = margin_y + data_model.fragments[i].y * box_size + box_size / 2.0;
-    context.fillText(text, x, y);
-  }
-  
-  // Dibujar rejilla
-  context.strokeStyle = "#888888";
-  for(y = 0; y < data_model.rows; ++y) {
-    for(x = 0; x < data_model.cols; ++x) {
-      context.rect(margin_x + x * box_size, margin_y + y * box_size, box_size, box_size);
+  // Dibujar fondo
+  background = document.createElement('img');
+  background.src = img_path + "/fondo.png";
+  background.onload = function() {
+    
+    context.drawImage(background, margin_x, margin_y, board_width, board_height);
+    
+    // Dibujar rejilla
+    context.strokeStyle = "#888888";
+    for(y = 0; y < data_model.rows; ++y) {
+      for(x = 0; x < data_model.cols; ++x) {
+        context.rect(margin_x + x * box_size, margin_y + y * box_size, box_size, box_size);
+      }
     }
+    context.rect(margin_x, margin_y, board_width, board_height);
+    context.stroke();
+    
+    // Dibujar fragmentos
+    var image_fragment = document.createElement('img');
+    image_fragment.src = img_path + "/mensaje.png";
+    image_fragment.onload = function(){
+      
+      context.fillStyle = "#FFFFFF";
+      for (i = 0; i < data_model.fragments.length; ++i) {
+        var text = "" + data_model.fragments[i].fragment;
+        var x = margin_x + data_model.fragments[i].x * box_size;
+        var y = margin_y + data_model.fragments[i].y * box_size;
+        context.drawImage(image_fragment, x, y, box_size, box_size);
+        context.font = (box_size * FONT_SIZE_RATIO) + "px Georgia";
+        context.fillText(text, x + box_size * TEXT_X_RATIO, y + box_size * TEXT_Y_RATIO, box_size * TEXT_MAX_WIDTH_RATIO);
+      }
+    }
+    
+    // Dibujar jugador
+    draw_player_image(img_path + "/inicial.png");
+    
+    context.fillStyle = "#FFFFFF";
   }
-  context.rect(margin_x, margin_y, board_width, board_height);
-  context.stroke();
   
-  // Dibujar jugador
-  draw_player_image("img/inicial.png");
-  
-  context.fillStyle = "#FFFFFF";
 }
 
 function reset() {
@@ -184,7 +211,7 @@ function update_player() {
 function get_player_image_file(last_movement, current_movement) {
   
   /* Obtencion del nombre de la imagen a partir de el movimiento anterior y el actual */
-  var file = "img/";
+  var file = img_path + "/";
 
   switch (last_movement) {
     case KEY_NONE:
@@ -228,6 +255,13 @@ function get_player_image_file(last_movement, current_movement) {
   return file;
 }
 
+function clean_box(x, y) {
+  
+  var box_image_width = background.width / data_model.cols;
+  var box_image_height = background.height / data_model.rows;
+  context.drawImage(background, x * box_image_width, y * box_image_height, box_image_width, box_image_height, BORDER_SIZE + margin_x + x * box_size, BORDER_SIZE + margin_y + y * box_size, box_size - BORDER_SIZE * 2.0, box_size  - BORDER_SIZE * 2.0)
+}
+
 function draw_player_image(file) {
 
   var x = data_model.player.x;
@@ -236,8 +270,7 @@ function draw_player_image(file) {
   var image = document.createElement('img');
   image.src = file;
   image.onload = function(){
-    context.fillStyle = "#FFFFFF";
-    context.fillRect(margin_x + x * box_size + BORDER_SIZE, margin_y + y * box_size + BORDER_SIZE, box_size - BORDER_SIZE * 2.0, box_size - BORDER_SIZE * 2.0);
+    clean_box(x, y);
     context.drawImage(image, margin_x + x * box_size, margin_y + y * box_size, box_size, box_size);
   }
 }
@@ -261,7 +294,7 @@ function update_game() {
     }
     
     // Dibujado de la imagen de extremo
-    var image_head_file = "img/";
+    var image_head_file = img_path + "/";
     switch(data_model.player.last_movement) {
       case KEY_UP:    image_head_file += "extremo_norte.png"; break;
       case KEY_DOWN:  image_head_file += "extremo_sur.png"; break;
@@ -324,7 +357,7 @@ function end_game(victory) {
     // Imagen de derrota
     var x = data_model.player.x, y = data_model.player.y;
     var image = document.createElement('img');
-    image.src = "img/cross.png";
+    image.src = img_path + "/cross.png";
     image.onload = function(){
       context.drawImage(image, margin_x + x * box_size, margin_y + y * box_size, box_size, box_size);
     }
@@ -334,9 +367,7 @@ function end_game(victory) {
 }
 
 function on_frame() {
-  
-  // TODO Añadir imágenes de los fragmentos
-  
+
   if (!data_model.player.alive) // Comprobación de que el juego no ha terminado
     return;
     
@@ -346,7 +377,7 @@ function on_frame() {
     update_game(); // Se actualiza el entorno y se analiza el estado del juego
 }
 
-function on_event(evento) {
+function on_event_keyboard(evento) {
   var e = window.event || evento;
   
   // Reseteado
@@ -354,8 +385,6 @@ function on_event(evento) {
     reset();
     return;
   }
-
-  // TODO Eventos de móvil
   
   // Movimiento del jugador
   switch(data_model.player.last_movement) {
@@ -366,13 +395,45 @@ function on_event(evento) {
     break;
     case KEY_UP: case KEY_DOWN:
       switch (e.keyCode) {
-        case KEY_LEFT: case KEY_RIGHT:  data_model.player.last_select_movement = e.keyCode; break;
+        case KEY_LEFT: case KEY_RIGHT: data_model.player.last_select_movement = e.keyCode; break;
       }
     break;
     case KEY_LEFT: case KEY_RIGHT:
       switch (e.keyCode) {
-        case KEY_UP: case KEY_DOWN:    data_model.player.last_select_movement = e.keyCode; break;
+        case KEY_UP: case KEY_DOWN: data_model.player.last_select_movement = e.keyCode; break;
       }
     break;
   }
+}
+
+function on_event_touchstart(evento) {
+  
+  start_x = parseInt(evento.changedTouches[0].clientX);
+  start_y = parseInt(evento.changedTouches[0].clientY);
+  
+  evento.preventDefault();
+}
+
+function on_event_touchmove(evento) {
+  
+  var end_x = parseInt(evento.changedTouches[0].clientX);
+  var end_y = parseInt(evento.changedTouches[0].clientY);
+  
+  if (Math.abs(start_x - end_x) > Math.abs(start_y - end_y)) {
+    if (start_x - end_x < 0)
+      data_model.player.last_select_movement = KEY_RIGHT;
+    else
+      data_model.player.last_select_movement = KEY_LEFT;
+  }
+  else {
+    if (start_y - end_y < 0)
+      data_model.player.last_select_movement = KEY_DOWN;
+    else
+      data_model.player.last_select_movement = KEY_UP;
+  }
+    
+  start_x = end_x;
+  start_y = end_y;
+
+  evento.preventDefault();
 }
