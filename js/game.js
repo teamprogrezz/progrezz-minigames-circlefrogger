@@ -19,6 +19,7 @@ var ANIMATION_TIME = 80 // Retardo entre las iluminaciones en la animación de v
 var MIN_DISPLACEMENT = 10 // Número mínimo de píxeles a desplazarse para un movimiento valido
 
 var frame_time // Tiempo de refresco (ms) - Determina la velocidad
+var easy_version = false; // Indica si está activado el juego en su versión fácil
 
 var canvas, context // "canvas" 2D y "context" para el dibujado
 var box_size // Tamaño de las casillas del tablero
@@ -32,6 +33,8 @@ var background // Imagen de fondo
 var img_path // Ruta relativa del directorio con las imágenes del juego
 
 var start_x, start_y // Coordenadas de inicio de evento de toque
+var pos_x, pos_y // Columna y fila que esta seleccionando el jugador
+var head_selected = false; // Indica si el jugador está arrastrando la cabeza de la serpiente
 
 // Datos del juego
 var data_model = {
@@ -59,7 +62,10 @@ function init_link_snake(success_function, failure_function, path, num_fragments
   failure_game = failure_function;
   
   /* Establecimiento de la velocidad de la serpiente */
-  frame_time = speed;
+  if (speed > 0) // Modo de juego normal
+    frame_time = speed;
+  else
+    easy_version = true;
   
   /* Almacenando ruta relativa del directorio de imágenes */
   img_path = path;
@@ -69,13 +75,25 @@ function init_link_snake(success_function, failure_function, path, num_fragments
   init_view(id_canvas);
 
   /* Eventos */
-  document.onkeydown = on_event_keyboard;
-  document.ontouchstart = on_event_touchstart;
-  document.ontouchmove = on_event_touchmove;
+  document.onkeydown = on_event_keyboard; // Teclado
+  if (easy_version) { // Ratón
+    canvas.onmousedown = on_event_mouse;
+    canvas.onmouseup = on_event_mouse;
+  }
+  if (easy_version) // Toque
+    canvas.ontouchend = on_event_touch;
+  else
+    canvas.ontouchmove = on_event_touch;
+  canvas.ontouchstart = on_event_touch;
 
   /* Renderizado */
-  on_frame();
-  setInterval(on_frame, frame_time);
+  if (easy_version) { // Modo sencillo: el jugador desplaza el cable
+    
+  }
+  else { // Modo normal: el cable se desplaza de forma automatica
+    on_frame();
+    setInterval(on_frame, frame_time);
+  }
 }
 
 function init_data_model(num_fragments, rows, cols) {
@@ -186,32 +204,95 @@ function reset() {
       data_model.map[y][x] = false;
   data_model.map[data_model.player.y][data_model.player.x] = true;
   
+  head_selected = false;
+  
   init_view();
 }
 
 function update_player() {
   
-  // Actualizar movimientos
-  last_direction = data_model.player.last_movement;
-  data_model.player.last_movement = data_model.player.last_select_movement;
+  if (easy_version) { // Versión fácil
+    
+    if (head_selected) { // Si se está arrastrando la cabeza del cable
+      
+      var movement = KEY_NONE; // Dirección del movimiento
+      
+      if (pos_x == data_model.player.x && Math.abs(data_model.player.y - pos_y) == 1) // Desplazamiento en vertical
+        movement = (data_model.player.y - pos_y) < 0 ? KEY_DOWN : KEY_UP;
+      else if (pos_y == data_model.player.y && Math.abs(data_model.player.x - pos_x) == 1) // Desplazamiento en horizontal
+        movement = (data_model.player.x - pos_x) < 0 ? KEY_RIGHT : KEY_LEFT;
+
+      switch (movement) { // Comprobación de que no se realizan movimientos en sentido inverso
+        
+        case KEY_RIGHT:
+          if (data_model.player.last_movement == KEY_LEFT)
+            return;
+        break;
+        
+        case KEY_LEFT:
+          if (data_model.player.last_movement == KEY_RIGHT)
+            return;
+        break;
+        
+        case KEY_UP:
+          if (data_model.player.last_movement == KEY_DOWN)
+            return;
+        break;
+        
+        case KEY_DOWN:
+          if (data_model.player.last_movement == KEY_UP)
+            return;
+        break;
+        
+        case KEY_NONE:
+          return;
+        break;
+      }
+      
+      // Dibujado de la imagen, y actualización de posición y estado del juego
+      draw_player_image(get_player_image_file(data_model.player.last_movement, movement));
+      update_player_pos(movement);
+      data_model.player.last_movement = movement;
+      update_game();
+      
+    }
+    else { // No está siendo arrastrada la cabeza del cable
+      if (pos_x == data_model.player.x && pos_y == data_model.player.y) // Comprobación de selección
+        head_selected = true;
+    }
+  }
+  else { // Versión completa
+    
+    // Actualizar movimientos
+    last_direction = data_model.player.last_movement;
+    data_model.player.last_movement = data_model.player.last_select_movement;
+    
+    // Dibujado de la imagen
+    draw_player_image(get_player_image_file(last_direction, data_model.player.last_movement));
+    
+    // Actualizar posición del jugador
+    update_player_pos(data_model.player.last_movement);
+    
+    data_model.player.x = Math.abs((data_model.player.x + data_model.cols) % data_model.cols);
+    data_model.player.y = Math.abs((data_model.player.y + data_model.rows) % data_model.rows);
+  }
+}
+
+function update_player_pos(movement) {
   
-  // Dibujado de la imagen
-  draw_player_image(get_player_image_file(last_direction, data_model.player.last_movement));
-  
-  // Actualizar posición del jugador
-  switch(data_model.player.last_movement) {
+  switch(movement) {
+    
     case KEY_UP:    data_model.player.y--; break;
     case KEY_DOWN:  data_model.player.y++; break;
     case KEY_LEFT:  data_model.player.x--; break;
     case KEY_RIGHT: data_model.player.x++; break;
   }
+}
+
+function calculate_player_selected_pos(x, y) {
   
-  data_model.player.x = Math.abs((data_model.player.x + data_model.cols) % data_model.cols);
-  data_model.player.y = Math.abs((data_model.player.y + data_model.rows) % data_model.rows);
-  
-  // Establecimiento del primer movimiento del jugador
-  if (data_model.player.first_movement == KEY_NONE)
-    data_model.player.first_movement = data_model.player.last_movement;
+  pos_x = Math.floor((x - margin_x) / box_size); // Columna
+  pos_y = Math.floor((y - margin_y) / box_size); // Fila
 }
 
 function get_player_image_file(last_movement, current_movement) {
@@ -261,6 +342,20 @@ function get_player_image_file(last_movement, current_movement) {
   return file;
 }
 
+function get_player_head_image_file(movement) {
+  
+  var file = img_path + "/";
+  
+  switch(movement) {
+    case KEY_UP:    file += "extremo_norte.png"; break;
+    case KEY_DOWN:  file += "extremo_sur.png"; break;
+    case KEY_LEFT:  file += "extremo_oeste.png"; break;
+    case KEY_RIGHT: file += "extremo_este.png"; break;
+  }
+  
+  return file;
+}
+
 function clean_box(x, y) {
   
   var box_image_width = background.width / data_model.cols;
@@ -282,7 +377,11 @@ function draw_player_image(file) {
 }
 
 function update_game() {
-  
+    
+  // Establecimiento del primer movimiento del jugador
+  if (data_model.player.first_movement == KEY_NONE)
+    data_model.player.first_movement = data_model.player.last_movement;
+    
   if (!data_model.map[data_model.player.y][data_model.player.x]) { // Si el jugador no ha recorrido la casilla
   
     // Comprobación de fragmento capturado
@@ -300,14 +399,7 @@ function update_game() {
     }
     
     // Dibujado de la imagen de extremo
-    var image_head_file = img_path + "/";
-    switch(data_model.player.last_movement) {
-      case KEY_UP:    image_head_file += "extremo_norte.png"; break;
-      case KEY_DOWN:  image_head_file += "extremo_sur.png"; break;
-      case KEY_LEFT:  image_head_file += "extremo_oeste.png"; break;
-      case KEY_RIGHT: image_head_file += "extremo_este.png"; break;
-    }
-    draw_player_image(image_head_file);
+    draw_player_image(get_player_head_image_file(data_model.player.last_movement));
     
     data_model.map[data_model.player.y][data_model.player.x] = true; // Se marca como recorrido
   }
@@ -383,8 +475,34 @@ function on_frame() {
     update_game(); // Se actualiza el entorno y se analiza el estado del juego
 }
 
+function on_event_mouse(evento) {
+  
+  evento.preventDefault();
+  
+  if (!data_model.player.alive)
+    return;
+  
+  switch(evento.type) {
+    
+    case "mousemove":
+      calculate_player_selected_pos(evento.clientX, evento.clientY);
+      update_player();
+    break;
+    case "mousedown":
+      document.onmousemove = on_event_mouse;
+    break;
+    case "mouseup":
+      head_selected = false;
+      document.onmousemove = null;
+    break;
+  }
+}
+
 function on_event_keyboard(evento) {
+  
   var e = window.event || evento;
+  
+  evento.preventDefault();
   
   // Reseteado
   if (e.keyCode == KEY_RESET) {
@@ -392,70 +510,96 @@ function on_event_keyboard(evento) {
     return;
   }
   
-  // Movimiento del jugador
-  switch(data_model.player.last_movement) {
-    case KEY_NONE:
-      switch (e.keyCode) {
-        case KEY_LEFT: case KEY_RIGHT: case KEY_UP: case KEY_DOWN: data_model.player.last_select_movement = e.keyCode; break;
-      }
-    break;
-    case KEY_UP: case KEY_DOWN:
-      switch (e.keyCode) {
-        case KEY_LEFT: case KEY_RIGHT: data_model.player.last_select_movement = e.keyCode; break;
-      }
-    break;
-    case KEY_LEFT: case KEY_RIGHT:
-      switch (e.keyCode) {
-        case KEY_UP: case KEY_DOWN: data_model.player.last_select_movement = e.keyCode; break;
-      }
-    break;
+  if (!easy_version) {
+    // Movimiento del jugador
+    switch(data_model.player.last_movement) {
+      case KEY_NONE:
+        switch (e.keyCode) {
+          case KEY_LEFT: case KEY_RIGHT: case KEY_UP: case KEY_DOWN: data_model.player.last_select_movement = e.keyCode; break;
+        }
+      break;
+      case KEY_UP: case KEY_DOWN:
+        switch (e.keyCode) {
+          case KEY_LEFT: case KEY_RIGHT: data_model.player.last_select_movement = e.keyCode; break;
+        }
+      break;
+      case KEY_LEFT: case KEY_RIGHT:
+        switch (e.keyCode) {
+          case KEY_UP: case KEY_DOWN: data_model.player.last_select_movement = e.keyCode; break;
+        }
+      break;
+    }
   }
 }
 
-function on_event_touchstart(evento) {
-  
-  start_x = parseInt(evento.changedTouches[0].clientX);
-  start_y = parseInt(evento.changedTouches[0].clientY);
+function on_event_touch(evento) {
   
   evento.preventDefault();
-}
-
-function on_event_touchmove(evento) {
   
-  var end_x = parseInt(evento.changedTouches[0].clientX);
-  var end_y = parseInt(evento.changedTouches[0].clientY);
-  
-  if (Math.abs(start_x - end_x) > Math.abs(start_y - end_y)) {
-    if (Math.abs(start_x - end_x) > MIN_DISPLACEMENT) {
-      switch(data_model.player.last_movement) {
-        case KEY_UP: case KEY_DOWN: case KEY_NONE:
-          if (start_x - end_x < 0)
-            data_model.player.last_select_movement = KEY_RIGHT;
-          else
-            data_model.player.last_select_movement = KEY_LEFT;
-        break;
-      }
-    }
-    else
+  if (easy_version) {
+    if (!data_model.player.alive)
       return;
+  
+    switch(evento.type) {
+      
+      case "touchmove":
+        calculate_player_selected_pos(evento.changedTouches[0].clientX, evento.changedTouches[0].clientY);
+        update_player();
+      break;
+      case "touchstart":
+        document.ontouchmove = on_event_touch;
+      break;
+      case "touchend":
+        head_selected = false;
+        document.ontouchmove = null;
+      break;
+    } 
   }
   else {
-    if (Math.abs(start_y - end_y) > MIN_DISPLACEMENT) {
-      switch(data_model.player.last_movement) {
-        case KEY_LEFT: case KEY_RIGHT: case KEY_NONE:
-          if (start_y - end_y < 0)
-            data_model.player.last_select_movement = KEY_DOWN;
-          else
-            data_model.player.last_select_movement = KEY_UP;
-        break;
-      }
-    }
-    else
-      return;
-  }
     
-  start_x = end_x;
-  start_y = end_y;
-
-  evento.preventDefault();
+    switch(evento.type) {
+      
+      case "touchstart":
+        start_x = parseInt(evento.changedTouches[0].clientX);
+        start_y = parseInt(evento.changedTouches[0].clientY);
+      break;
+      case "touchmove":
+        var end_x = parseInt(evento.changedTouches[0].clientX);
+        var end_y = parseInt(evento.changedTouches[0].clientY);
+        
+        if (Math.abs(start_x - end_x) > Math.abs(start_y - end_y)) {
+          if (Math.abs(start_x - end_x) > MIN_DISPLACEMENT) {
+            switch(data_model.player.last_movement) {
+              case KEY_UP: case KEY_DOWN: case KEY_NONE:
+                if (start_x - end_x < 0)
+                  data_model.player.last_select_movement = KEY_RIGHT;
+                else
+                  data_model.player.last_select_movement = KEY_LEFT;
+              break;
+            }
+          }
+          else
+            return;
+        }
+        else {
+          if (Math.abs(start_y - end_y) > MIN_DISPLACEMENT) {
+            switch(data_model.player.last_movement) {
+              case KEY_LEFT: case KEY_RIGHT: case KEY_NONE:
+                if (start_y - end_y < 0)
+                  data_model.player.last_select_movement = KEY_DOWN;
+                else
+                  data_model.player.last_select_movement = KEY_UP;
+              break;
+            }
+          }
+          else
+            return;
+        }
+          
+        start_x = end_x;
+        start_y = end_y;
+      break;
+    }
+    
+  }
 }
