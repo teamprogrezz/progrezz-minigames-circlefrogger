@@ -209,11 +209,15 @@ function reset() {
   init_view();
 }
 
+function inside_board() {
+  return (pos_x >= 0 && pos_y >= 0 && pos_x < data_model.cols && pos_y < data_model.rows); 
+}
+
 function update_player() {
   
   if (easy_version) { // Versión fácil
     
-    if (head_selected) { // Si se está arrastrando la cabeza del cable
+    if (head_selected && inside_board()) { // Si se está arrastrando la cabeza del cable y se está dentro del tablero
       
       var movement = KEY_NONE; // Dirección del movimiento
       
