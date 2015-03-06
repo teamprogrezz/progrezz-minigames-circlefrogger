@@ -1,4 +1,9 @@
 
+// Espacio de nombres
+var LinkSnake = {};
+
+(function(namespace){
+
 // Códigos de teclas
 var KEY_NONE  = -1
 var KEY_UP    = 38
@@ -36,6 +41,8 @@ var start_x, start_y // Coordenadas de inicio de evento de toque
 var pos_x, pos_y // Columna y fila que esta seleccionando el jugador
 var head_selected = false; // Indica si el jugador está arrastrando la cabeza de la serpiente
 
+function LinkSnake() { }
+
 // Datos del juego
 var data_model = {
   fragments: [],
@@ -55,7 +62,7 @@ var data_model = {
   map: null
 };
 
-function init_link_snake(success_function, failure_function, num_fragments, rows, cols, speed, id_canvas) {
+namespace.init = function (success_function, failure_function, num_fragments, rows, cols, speed, id_canvas) {
   
   /* Establecimiento de funciones de victoria y derrota */
   success_game = success_function;
@@ -639,3 +646,5 @@ function on_event_touch(evento) {
     
   }
 }
+
+})(LinkSnake);
