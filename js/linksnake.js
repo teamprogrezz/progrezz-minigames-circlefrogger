@@ -55,7 +55,7 @@ var data_model = {
   map: null
 };
 
-function init_link_snake(success_function, failure_function, path, num_fragments, rows, cols, speed, id_canvas) {
+function init_link_snake(success_function, failure_function, num_fragments, rows, cols, speed, id_canvas) {
   
   /* Establecimiento de funciones de victoria y derrota */
   success_game = success_function;
@@ -68,7 +68,7 @@ function init_link_snake(success_function, failure_function, path, num_fragments
     easy_version = true;
   
   /* Almacenando ruta relativa del directorio de imágenes */
-  img_path = path;
+  img_path = getImagesURL();
   
   /* Inicialización de datos y vista */
   init_data_model(num_fragments, rows, cols);
@@ -94,6 +94,13 @@ function init_link_snake(success_function, failure_function, path, num_fragments
     on_frame();
     setInterval(on_frame, frame_time);
   }
+}
+
+function getImagesURL() {
+  
+  var dir = document.querySelector('script[src$="linksnake.js"]').getAttribute('src');
+  var name = dir.split("/").pop();
+  return dir.replace("js/" + name, "img");
 }
 
 function init_data_model(num_fragments, rows, cols) {
@@ -188,6 +195,29 @@ function init_view(id_canvas) {
     context.fillStyle = "#FFFFFF";
   }
   
+}
+
+function destructor() {
+  
+  data_model = {
+    fragments: [],
+    player: {
+      init_x: 0,
+      init_y: 0,
+      x: 0,
+      y: 0,
+      first_movement: KEY_NONE,
+      last_movement: KEY_NONE,
+      last_select_movement: KEY_NONE,
+      alive: true,
+      last_fragment_picked: 0
+    },
+    rows: 0,
+    cols: 0,
+    map: null
+  };
+  
+  head_selected = false;
 }
 
 function reset() {
@@ -466,6 +496,8 @@ function end_game(victory) {
     
     setTimeout(failure_game, END_TIME);
   }
+  
+  destructor();
 }
 
 function on_frame() {
