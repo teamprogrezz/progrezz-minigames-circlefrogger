@@ -13,17 +13,14 @@ También se ha implementado una versión simple del juego, en el que en lugar de
 
 ##Instalación
 Para el empleo del juego LinkSnake en cualquier proyecto existen dos opciones:
-- Copiar las carpetas "js" e "img" en el lugar deseado.
+* Copiar las carpetas "js" e "img" en el lugar deseado.  
 > **Importante:** Es necesario que la carpeta "img" y "js" se encuentren en el mismo directorio.
-- Añadir el proyecto como submódulo de git, de la siguiente manera:
+
+* Añadir el proyecto como submódulo de git, de la siguiente manera:
 ```
 $ git submodule add https://github.com/teamprogrezz/progrezz-minigames-linksnake my-subdirectory/linksnake
+$ git submodule update --remote --merge // Para mantenerlo actualizado
 ```
-Y para mantenerlo actualizado, ejecutar:
-```
-$ git submodule update --remote --merge
-```
-
 Por último, bastaría con incluir el script "js/linksnake.js" en el documento HMTL en el que se quiera ubicar el juego.
 
 ##Utilización
