@@ -10,7 +10,7 @@ var CircleFrogger = {};
   var END_TIME = 100 // Retardo al finalizar el juego
   var ANIMATION_TIME = 120 // Retardo entre las iluminaciones en la animación de victoria
   
-  var ANGULAR_SPEED = 0.02;
+  var ANGULAR_SPEED = 0.02; // Velocidad base de los círculos (por frame)
 
   var frame_time // Tiempo de refresco (ms) - Determina la velocidad
 
@@ -22,16 +22,19 @@ var CircleFrogger = {};
   var box_size;   // Tamaño de la caja
   var margin_x, margin_y; // Márgenes
 
-  var opening_size;
+  // Sonidos
+  var sound_ok, sound_fail, sound_win;
 
-  var min_radius;
-  var max_radius;
-  var radius_spacing;
-  var arc_thickness;
+  var opening_size; // Tamaño de la apertura de los círculos, en radianes.
+  var min_radius; // Radio del círculo más pequeño.
+  var max_radius; // Radio del círculo más grande.
+  var radius_spacing; // Espacio entre círculos
+  var arc_thickness; // Grosor de los círculos
 
   var img_path; // Ruta relativa del directorio con las imágenes del juego
+  var snd_path; // Ruta relativa del directorio con los sonidos del juego
 
-  var game_end_state = false;
+  var game_end_state = false; // Saber si el juego a terminado (variable auiliar)
 
   function CircleFrogger() { }
 
@@ -58,8 +61,9 @@ var CircleFrogger = {};
     // Propiedades de círculos
     opening_size = opening;
 
-    /* Almacenando ruta relativa del directorio de imágenes */
+    /* Almacenando ruta relativa del directorio de recursos */
     img_path = getImagesURL();
+    snd_path = getSoundsURL();
     
     /* Inicialización de datos y vista */
     init_data_model(circles);
@@ -72,6 +76,19 @@ var CircleFrogger = {};
     /* Reiniciar estado del juego */
     reset();
 
+    /* Iniciar sonidos */
+    sound_ok = document.createElement('audio');
+    sound_ok.src = snd_path + "/sound_ok.wav";
+    sound_ok.preload = "auto";
+
+    sound_fail = document.createElement('audio');
+    sound_fail.src = snd_path + "/sound_fail.wav";
+    sound_fail.preload = "auto";
+
+    sound_win = document.createElement('audio');
+    sound_win.src = snd_path + "/sound_win.wav";
+    sound_win.preload = "auto";
+
     /* Renderizado */
     on_frame();
     setInterval(on_frame, frame_time);
@@ -82,6 +99,13 @@ var CircleFrogger = {};
     var dir = document.querySelector('script[src$="circlefrogger.js"]').getAttribute('src');
     var name = dir.split("/").pop();
     return dir.replace("js/" + name, "img");
+  }
+
+  function getSoundsURL() {
+    
+    var dir = document.querySelector('script[src$="circlefrogger.js"]').getAttribute('src');
+    var name = dir.split("/").pop();
+    return dir.replace("js/" + name, "snd");
   }
 
   function init_data_model(circles) {
@@ -298,10 +322,15 @@ var CircleFrogger = {};
         if(circle.start_angle > 0 && circle.start_angle < Math.PI && circle.end_angle < (2 * Math.PI) && circle.end_angle > Math.PI) {
 		      if(data_model.player.pos == data_model.circles.count) {
 		        end_game(true);
+            sound_win.play();
 		      }
+          else {
+            sound_ok.play();
+          }
         }
         else {
           data_model.player.alive = false;
+          sound_fail.play();
           end_game(false);
         }
 

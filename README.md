@@ -25,6 +25,7 @@ El juego emplea el espacio de nombres "CircleFrogger", siendo necesario utilizar
 
 - ***success_function***: Función que se ejecutará en caso de que el jugador complete con éxito la partida.
 - ***failure_function***: Función que se ejecutará en caso de que el jugador no consiga completar con éxito la partida.
+- ***opening***: Apertura de los círculos, especificada en radianes.
 - ***circles***: Número de círculos que aparecen en pantalla. **Debe ser mayor que 1.**
 - ***speed***: Determina la velocidad de movimiento de los círculos, especificado en ms como tiempo de refresco de pantalla. Cuanto más grande sea este valor, más lento ira el juego, y por consiguiente, será más fácil. No se recomienda usar valores demasiado grandes (< 20).
 - ***id_canvas***: Opcionalmente, se puede indicar el id del canvas en el que se desea dibujar el juego. En caso de que no se incluya este parámetro, se dibujará el juego en el primer canvas encontrado en el DOM.
@@ -63,7 +64,7 @@ El juego emplea el espacio de nombres "CircleFrogger", siendo necesario utilizar
 
 ## Agradecimientos
 
-- Cristo "Shylpx" González Rodríguez (plantilla y base del *Readme*).
+- Cristo "Shylpx" González Rodríguez (plantilla del juego y base del *Readme*).
 
 ##Version
 - 1.0.0
