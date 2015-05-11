@@ -1,7 +1,7 @@
 window.onload = function() {
-  LinkSnake.init(
+  CircleFrogger.init(
     function() { console.log("Victoria"); },
     function() { console.log("Derrota"); },
-    4, 12, 16, /*200*/0, "gameview"
+    5, 0.8, 20, "gameview"
   );
 };

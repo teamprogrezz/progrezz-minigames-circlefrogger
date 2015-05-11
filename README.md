@@ -1,36 +1,32 @@
-#Progrezz Minigames - LinkSnake
-Minijuego de recolección de fragmentos, basado en el clásico juego "Snake".
+#Progrezz Minigames - CircleFrogger
+Minijuego de desbloqueo de recursos, basado en el juego arcada "Frogger".
 
 ##Descripción
-LinkSnake consiste en una variación del clásico juego ["Snake"](http://es.wikipedia.org/wiki/Snake_%28videojuego%29).
+CircleFrogger consiste en una variación del clásico juego ["Frogger"](http://es.wikipedia.org/wiki/Frogger).
 
-En este caso, un cable se desplaza por el tablero (a una determinada velocidad) en la dirección que le vaya indicando el jugador (mediante las **flechas del teclado**, o **arrastrando con el dedo** en la dirección deseada en dispositivos con entrada táctil). Deberá ir recogiendo en orden una serie de fragmentos numerados. Una vez se recojan todos, el jugador deberá volver al inicio para cerrar el circuito y ganar.
+En este caso, se ha optado por una temática "hacker", usando círculos que rotan por la pantalla. El jugador (punto verde) deberá traspasar todos los círculos hasta llegar al centro sin tocar las paredes.
 
-Si se recogen los fragmentos en el orden incorrecto, o el cable choca contra sí mismo (pues se mantiene el cable en todos los lugares por los que ha pasado, no pudiendo recorrer la misma casilla dos veces), el jugador perderá la partida.
-
-También se ha implementado una versión simple del juego, en el que en lugar de moverse automáticamente, será el jugador el que deberá arrastrar la cabeza del cable (mediante **ratón**, o **tocando la pantalla** en dispositivos con entrada táctil), para completar el juego.
-> **Nota:** En la versión normal, al llegar a un extremo del tablero, el cable aparece por el lado opuesto, lo que no ocurre en la version simplificada.
+La velocidad y número de círculos es fácilmente ajustable.
 
 ##Instalación
-Para el empleo del juego LinkSnake en cualquier proyecto existen dos opciones:
+Para el empleo del juego CircleFrogger en cualquier proyecto existen dos opciones:
 * Copiar las carpetas "js" e "img" en el lugar deseado.  
 > **Importante:** Es necesario que la carpeta "img" y "js" se encuentren en el mismo directorio.
 
 * Añadir el proyecto como submódulo de git, de la siguiente manera:
 ```
-$ git submodule add https://github.com/teamprogrezz/progrezz-minigames-linksnake my-subdirectory/linksnake
+$ git submodule add https://github.com/teamprogrezz/progrezz-minigames-circlefrogger my-subdirectory/circlefrogger
 $ git submodule update --remote --merge // Para mantenerlo actualizado
 ```
-Por último, bastaría con incluir el script "js/linksnake.js" en el documento HMTL en el que se quiera ubicar el juego.
+Por último, bastaría con incluir el script "js/circlefrogger.js" en el documento HMTL en el que se quiera ubicar el juego.
 
 ##Utilización
-El juego emplea el espacio de nombres "LinkSnake", siendo necesario utilizar "LinkSnake.init" para inicializar el juego. El método posee los siguientes parámetros:
+El juego emplea el espacio de nombres "CircleFrogger", siendo necesario utilizar "CircleFrogger.init" para inicializar el juego. El método posee los siguientes parámetros:
+
 - ***success_function***: Función que se ejecutará en caso de que el jugador complete con éxito la partida.
 - ***failure_function***: Función que se ejecutará en caso de que el jugador no consiga completar con éxito la partida.
-- ***num_fragments***: Nº de fragmentos que el usuario deberá recoger en orden para completar el juego.
-- ***rows***: Nº de filas del tablero.
-- ***cols***: Nº de columnas del tablero.
-- ***speed***: Si se establece un valor mayor que 0, determina la velocidad de movimiento del cable que controla el jugador: indica cada cuantos milisegundos se realiza un movimiento de una casilla. Mientras que si el valor se establece en 0, el modo de juego cambiará a la versión más sencilla, en la que el usuario debe arrastrar la cabeza del cable para completar el juego siguiendo las mismas reglas que en la versión normal.
+- ***circles***: Número de círculos que aparecen en pantalla. **Debe ser mayor que 1.**
+- ***speed***: Determina la velocidad de movimiento de los círculos, especificado en ms como tiempo de refresco de pantalla. Cuanto más grande sea este valor, más lento ira el juego, y por consiguiente, será más fácil. No se recomienda usar valores demasiado grandes (< 20).
 - ***id_canvas***: Opcionalmente, se puede indicar el id del canvas en el que se desea dibujar el juego. En caso de que no se incluya este parámetro, se dibujará el juego en el primer canvas encontrado en el DOM.
 
 > **Importante:** Cuando el juego finalice, se ejecutará la función de victoria o derrota, dependiendo de si el jugador ha ganado o ha perdido, respectivamente.
@@ -40,20 +36,19 @@ El juego emplea el espacio de nombres "LinkSnake", siendo necesario utilizar "Li
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Link Snake - Test</title>
-  <script type="text/javascript" src="js/linksnake.js"></script>
+  <title>CircleFrogger - Test</title>
+  <script type="text/javascript" src="js/circlefrogger.js"></script>
 </head>
 <body style="margin:0px; padding:0px">
   <canvas id="gameview" width="960" height="720"></canvas>
   <script>
     window.onload = function() {
-      LinkSnake.init(
+      CircleFrogger.init(
         function() { console.log("Victoria"); }, // Función de victoria
         function() { console.log("Derrota"); }, // Función de derrota
-        4, // Fragmentos
-        12, // Filas
-        16, // Columnas
-        200, // Movimiento cada 200 ms
+        12, // Círculos
+        0.8, // Abertura
+        16, // Velocidad (ms)
         "gameview" // ID del canvas a utilizar
       );
     };
@@ -64,8 +59,11 @@ El juego emplea el espacio de nombres "LinkSnake", siendo necesario utilizar "Li
 > **Nota:** El script "js/test_game_manager" presenta un ejemplo simple de inclusión del juego en un canvas.
 
 ##Autores
-- Cristo "Shylpx" González Rodríguez
 - Daniel "Wikiti" Herzog Cruz
+
+## Agradecimientos
+
+- Cristo "Shylpx" González Rodríguez (plantilla y base del *Readme*).
 
 ##Version
 - 1.0.0
