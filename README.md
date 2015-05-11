@@ -10,8 +10,8 @@ La velocidad y número de círculos es fácilmente ajustable.
 
 ##Instalación
 Para el empleo del juego CircleFrogger en cualquier proyecto existen dos opciones:
-* Copiar las carpetas "js" e "img" en el lugar deseado.  
-> **Importante:** Es necesario que la carpeta "img" y "js" se encuentren en el mismo directorio.
+* Copiar las carpetas "js","img" y "snd" en el lugar deseado.  
+> **Importante:** Es necesario que las carpetas "img", "js" y "snd" se encuentren en el mismo directorio.
 
 * Añadir el proyecto como submódulo de git, de la siguiente manera:
 ```
