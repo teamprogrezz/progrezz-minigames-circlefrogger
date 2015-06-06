@@ -8,6 +8,8 @@ En este caso, se ha optado por una temática "hacker", usando círculos que rota
 
 La velocidad y número de círculos es fácilmente ajustable.
 
+Puede ver un ejemplo funcional pulsando [aquí](http://teamprogrezz.github.io/progrezz-minigames-circlefrogger). 
+
 ##Instalación
 Para el empleo del juego CircleFrogger en cualquier proyecto existen dos opciones:
 * Copiar las carpetas "js" e "img" en el lugar deseado.  
